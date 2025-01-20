@@ -21,4 +21,13 @@ impl Channel {
     pub fn receive(&self) -> Result<Message, String> {
         self.receiver.recv().or(Err("Receive Error".to_string()))
     }
+
+    pub fn new() -> (Self, Self) {
+        let (s1, r1) = mpsc::channel();
+        let (s2, r2) = mpsc::channel();
+        (
+            Self { receiver: r1, sender: s2 },
+            Self { receiver: r2, sender: s1 }
+        )
+    }
 }
