@@ -1,80 +1,24 @@
-use std::{collections::HashMap, time::Duration};
+mod task1;
+mod task2;
+mod task3;
 
-type HostID = String;
-type Topic = String;
-/// Map of hosts that have subscribed to a topic
-type TopicMap = HashMap<Topic, Vec<HostID>>;
+pub type ClientID = u64;
+pub type TopicID = String;
 
-const HOST: &str = "1234abcd";
-
-#[derive(Clone)]
-pub enum Message {
-    Publish {
-        src_host_id: HostID,
-        dst_host_id: HostID,
-        topic: Topic,
-        payload: Vec<u8>,
-    },
-    Subscribe {
-        src_host_id: HostID,
-        dst_host_id: HostID,
-        topic: Topic,
-    }
-}
+pub const CLIENT_ID: ClientID = 0;
 
 
-/// Communication channel trait that pubsub host will use
-pub trait PubSubChannel {
-    fn send(&self, message: Message) -> Result<(), String>;
+/*
+You're helping to build a control system for an autonomous spacecraft.
+The spacecraft has many individual subsystems that produce and consume data.The engineering team decided a PubSub messaging model would be the best fit for this situation.
 
-    /// Blocking
-    fn receive(&self) -> Result<Message, String>;
+Your system needs to manage a set of topics and subscribers. Subscribers can publish data to a topic or subscribe to a topic. Whenever data is published to a topic, everyone who subscribed to
+that topic should be sent the data.
+*/
 
-    /// Non blocking
-    fn try_receive(&self, timeout: Duration) -> Result<Message, String>;
-}
-
-
-pub struct PubSub<C: PubSubChannel> {
-    channel: C,
-    subscribers: TopicMap,
-}
-impl<C: PubSubChannel> PubSub<C> {
-    pub fn new(channel: C) -> Self {
-        Self {
-            channel,
-            subscribers: HashMap::new(),
-        }
-    }
-
-    /// Publish a message to a specific topic
-    pub fn publish(&self, topic: &Topic, payload: &[u8]) {
-        let Some(subscribers) = self.subscribers.get(topic) else { return };
-        for subscriber in subscribers {
-            let msg = Message::Publish { src_host_id: HOST.into(), dst_host_id: subscriber.into(), topic: topic.into(), payload: payload.into() };
-            self.channel.send(msg);
-        }
-    }
-
-    /// Subscribe to a specific topic at a specific end host
-    pub fn subscribe(&self, topic: &Topic, dst_host: &HostID) {
-        let msg = Message::Subscribe { src_host_id: HOST.into(), dst_host_id: dst_host.into(), topic: topic.into() };
-        self.channel.send(msg);
-    }
-
-    /// handle all subscribe messages and return publish messages for processing.
-    pub fn poll_publish(&mut self) -> Vec<Message> {
-        let mut publishes = vec![];
-        while let Ok(message) = self.channel.try_receive(Duration::from_millis(10)) {
-            match message {
-                Message::Publish {..} => publishes.push(message),
-                Message::Subscribe { src_host_id, dst_host_id, topic } => {
-                    self.subscribers.entry(topic).or_insert(vec![]).push(src_host_id);
-                },
-            }
-        }
-
-        publishes
-    }
-}
-
+// Tasks:
+//  1. Managing data in a collection. What data structure/collection to use? Accessing and mutating data in the collection.
+//
+//  2. Borrowing and passing data around, control flow. Meant to make you think about ownership and borrowing.
+//
+//  3. Rust standard library usage.
